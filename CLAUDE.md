@@ -2,33 +2,32 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Running
+## Commands
 
-A three.js r128 fly-through scene ("Suijō Market Canal"). There is no build step, package manager, linter or test suite. Open `index.html` in a browser directly (file:// works); all textures are generated on canvases at runtime, so nothing needs a server. The only external request is the Google Fonts stylesheet for the UI panel.
+```sh
+npm install
+npm run dev       # Vite dev server (http://localhost:5173)
+npm run build     # bundle to dist/
+npm run preview   # serve dist/
+```
 
-`window.__ready` is set to `true` once the scene is built and the render loop has started, so it can be used to wait for load when driving the page in a headless browser.
+There is no test suite or linter. Verify changes by running the dev server, checking the browser console (three.js logs shader compile errors there instead of throwing, so a broken `onBeforeCompile` patch shows up only as missing objects), and comparing screenshots. In dev mode `window.__debug.setView(x, y, z, yaw, pitch)` puts the camera at a fixed viewpoint, and `window.__ready` is `true` once the scene is built. Useful views: `(-10.5,2.6,42.5,.07,.22)` start, `(0,70,55,0,-.8)` overhead, `(0,4,-18,0,.05)` tunnel, `(28,5,32,.785,-.2)` dock and shadows.
+
+## Purpose and style
+
+This is a teaching project: code comments explain three.js and 3D-graphics techniques. Keep that up when editing. New or changed code should get a comment explaining *why* where a technique is non-obvious, written for someone learning three.js. Use descriptive names and readable formatting (no dense one-liners).
 
 ## Architecture
 
-**One shared global scope.** Every file in `js/` is a classic `<script>` (not a module) with `'use strict'`, and they share top-level `const`/`let`/`function` names. Load order lives in `index.html` and is load-bearing: a file can only use names declared by files before it at the moment it runs. `README.md` lists the order and what each file does. When you add a file, add its `<script>` tag in the right spot and update the README list too. Each file starts with a three-line header comment (filename, purpose, the classic-script note); keep that pattern.
+- `src/main.js` owns everything global: renderer, scene, camera, the build order and the `renderer.setAnimationLoop` loop.
+- Each scene feature in `src/world/` exports `build…(deps)` returning `{ object, update?(time, delta) }`. Dependencies are passed explicitly (e.g. `buildSky({ camera })`, `buildWater({ sunDirection })`). Features build into their own `Group` in world coordinates. `addMesh(parent, geometry, material, x, y, z, options)` always takes the parent first.
+- `src/core/` holds shared pieces: `helpers.js` (units `QUAY_HEIGHT`/`DECK_HEIGHT`, `mapToWorld`, `createRandom`, `sharedRandom`, `canvasTexture`, `standardMaterial`, `addMesh`, `addCylinder`), `textures.js` (shared textures, `addSign`, `addRailing`, `addBanner`, `createFacadeTexture`), `materials.js`, `foliage.js`, `person.js`.
 
-Cross-file globals worth knowing:
-- `core.js`: `T` (= `THREE`), `V3`, `renderer`, `scene`, `camera`, `msg` (the loading/error overlay).
-- `helpers.js`: `S`, `QUAY`, `DECK` (world scale and standard heights), `P(px,py)`, `rng(seed)` / `R0`, `ctex()` (canvas texture), `M()` (MeshStandardMaterial shortcut), `add()` (create, place and parent a mesh with shadows on by default), `capsule()`.
-- `people.js` defines `Q = QUAY`, which `trees.js` and later files also use.
-- Animated objects are exposed as globals that `main.js` reads every frame: `water`, `wnTex`, `windU`, `route`, `tram`, `wake`, `dock`, `bobbers`, `swing`, `flags`, `walkers`/`stepWalker`, `waiters`, `keeper`, `sky`, and `fly()` from `controls.js`. Anything new that animates follows the same pattern: build it in its feature file, put the handle in a global, update it in `tick()`.
+### Invariants that break silently
 
-**Map coordinates.** The layout was traced from a 2D reference map. `P(px,py)` turns map pixel coordinates (centred on 340,250) into world `[x,z]` at scale `S=0.13`. Numbers in parentheses in comments and the README, such as "tunnel (14)" or "tram (7)", are the feature labels on that map.
+- **Build order = random seed.** `sharedRandom` is one stream consumed by buildings, shop, watermelons, people (walker phases, plus pauses at runtime) and trees, in the order `main.js` calls them. Every local `createRandom(seed)` stream is also consumed strictly in call order. Reordering builders, adding a `random()` call, or reordering expressions that call `random()` moves every later leaf, window and walker. Give new features their own `createRandom(seed)`.
+- **Leaves are built last.** `addLeafCluster()`/`addTree()` only queue leaves. `buildLeafMesh()` in `main.js` makes one `InstancedMesh` and throws if more leaves are queued afterwards.
+- **Colour management.** three.js converts sRGB hex/CSS colours in materials and fog automatically. Never call `convertSRGBToLinear()` on them. Light colours (and Water's `sunColor`) are deliberately set with `setHex(hex, LinearSRGBColorSpace)`, and light intensities are multiplied by π, both to reproduce the scene's original r128 look. Canvas colour textures get `colorSpace = SRGBColorSpace` in `canvasTexture()`. The water normal map must stay untagged.
+- **Shader patches** (`core/foliage.js` leaves, `world/water.js`) replace specific `#include <chunk>` names from three r187. After upgrading three, re-check those chunks in `node_modules/three/src/renderers/shaders/ShaderChunk/`.
 
-**Determinism.** Use the seeded `rng(seed)` (or `R0`), never `Math.random()`, so the scene comes out the same on every load. `bld()` derives its seed from position when none is given.
-
-**Colour pipeline.** Hex colours in materials are written as sRGB. `trees.js` ends with a pass over the whole scene that converts every non-shader, non-sprite material's `color`/`emissive` (and the fog colour) from sRGB to linear, once per material. So:
-- Materials created after `trees.js` runs will not be converted.
-- Do not call `convertSRGBToLinear()` on material colours yourself, or they get converted twice. The exceptions are values the pass doesn't touch: instance colours (`foliage.js`) and shader uniforms such as the Water `waterColor`.
-- Canvas textures from `ctex()` are already tagged `sRGBEncoding`.
-
-**Foliage.** `blob()` / `limb()` / `tree()` in `foliage.js` only queue leaf sprigs. `buildLeaves()` in `trees.js` turns the queue into instanced meshes with the wind-sway shader (driven by the `windU` uniform). Any foliage added after `buildLeaves()` runs will not appear.
-
-**Code style.** The code is deliberately dense: long one-line functions, short names, chained statements. Match the surrounding style when editing rather than reformatting.
-
-`vendor/` holds three.js r128 (`three.min.js`) and its `Water.js` example (MIT). Stick to the r128 API (`outputEncoding`, `sRGBEncoding`, `Geometry`-free BufferGeometry and so on), not newer three.js versions.
+three.js is pinned to `^0.187.0`. Import addons from `three/addons/...`. The README has the map-label convention ("(14)" etc.) and performance notes.
