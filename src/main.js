@@ -7,7 +7,6 @@
 // the feature moves. main.js is the only place that knows the build order and owns the
 // loop, so each feature can be read, changed or switched off in isolation.
 
-import './styles.css';
 import { Timer } from 'three';
 import { createCamera, createRenderer, createScene, resizeRendererToCanvas } from './core/renderer.js';
 import { buildLeafMesh, windUniform } from './core/foliage.js';
@@ -39,6 +38,12 @@ try {
 }
 const scene = createScene();
 const camera = createCamera();
+
+// Building the scene blocks the main thread for a moment (canvas textures, ~135k leaves).
+// Yield first, so the browser paints the loading overlay before the work starts:
+// requestAnimationFrame runs just before the next paint, and the setTimeout inside it
+// runs just after that paint.
+await new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve)));
 
 // --- Build the world ---------------------------------------------------------------------
 // ORDER MATTERS here for two reasons:

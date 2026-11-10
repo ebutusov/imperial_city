@@ -25,7 +25,13 @@ button{font:inherit;font-size:12.5px;font-weight:700;color:var(--ink);background
   border-radius:999px;padding:6px 12px;cursor:pointer}
 button:hover{border-color:var(--leaf)}
 button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-#msg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;
-  color:var(--ink);background:var(--haze);transition:opacity .6s}
+#msg{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+  font-size:15px;font-weight:700;color:var(--ink);background:var(--haze);transition:opacity .6s}
 #msg.done{opacity:0;pointer-events:none}
+/* Spinner: animating `transform` runs on the compositor thread, so it keeps turning even
+   while the main thread is busy building the scene. */
+.spinner{width:36px;height:36px;border-radius:50%;border:4px solid var(--line);border-top-color:var(--accent);
+  animation:spin .9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spinner{animation-duration:2.4s}}
 @media (max-width:520px){.keys{font-size:12px}.panel{padding:10px 12px}}
