@@ -1,0 +1,31 @@
+html,body{margin:0}
+[hidden]{display:none!important}
+/* Layout: full-bleed 3D canvas; one small glass panel bottom-left for controls. Single committed look (sunlit scene). */
+:root{
+  --haze:#e4f0cc; --ink:#1d3a2c; --ink-soft:#3f5f4c; --panel:rgba(250,252,236,.82); --line:rgba(29,58,44,.18);
+  --accent:#c8452f; --leaf:#4f8f2c;
+  --font-ui:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Yu Gothic",system-ui,sans-serif;
+  color-scheme:light;
+}
+html,body{height:100%}
+body{background:var(--haze);color:var(--ink);font-family:var(--font-ui);overflow:hidden}
+#stage{position:relative;height:100%;width:100%}
+canvas#c{display:block;width:100%;height:100%;touch-action:none;cursor:grab;outline:none}
+canvas#c:active{cursor:grabbing}
+.panel{position:absolute;left:max(16px,env(safe-area-inset-left,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));
+  max-width:min(340px,calc(100% - 32px));background:var(--panel);border:1px solid var(--line);border-radius:14px;
+  padding:12px 14px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;flex-direction:column;gap:8px}
+.panel h1{font-size:15px;font-weight:700;margin:0;letter-spacing:.02em;text-wrap:balance}
+.panel h1 span{color:var(--accent)}
+.keys{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-size:12.5px;line-height:1.4;color:var(--ink-soft);margin:0}
+.keys dt{font-weight:700;color:var(--ink);white-space:nowrap}
+.keys dd{margin:0}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+button{font:inherit;font-size:12.5px;font-weight:700;color:var(--ink);background:#fffef2;border:1px solid var(--line);
+  border-radius:999px;padding:6px 12px;cursor:pointer}
+button:hover{border-color:var(--leaf)}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#msg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;
+  color:var(--ink);background:var(--haze);transition:opacity .6s}
+#msg.done{opacity:0;pointer-events:none}
+@media (max-width:520px){.keys{font-size:12px}.panel{padding:10px 12px}}

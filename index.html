@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Suijō Market Canal</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="stage">
+  <canvas id="c" tabindex="0" aria-label="3D canal market scene. Drag to look around, WASD to fly."></canvas>
+  <div class="panel" id="panel">
+    <h1>Suijō Market Canal <span>水上市場</span></h1>
+    <dl class="keys" id="keys">
+      <dt>Mouse</dt><dd>Drag to look. Click the scene to lock the pointer, Esc to release.</dd>
+      <dt>W A S D</dt><dd>Fly forward, left, back, right</dd>
+      <dt>Space / Q</dt><dd>Up / down. Hold Shift to go faster.</dd>
+      <dt>Touch</dt><dd>Drag right side to look, left side to move</dd>
+    </dl>
+    <div class="row">
+      <button id="reset" type="button">Reset view</button>
+      <button id="hide" type="button">Hide help</button>
+    </div>
+  </div>
+  <div id="msg">Building the canal…</div>
+</div>
+<script src="vendor/three.min.js"></script>
+<script src="vendor/Water.js"></script>
+<script src="js/core.js"></script>
+<script src="js/helpers.js"></script>
+<script src="js/sky-light.js"></script>
+<script src="js/textures.js"></script>
+<script src="js/foliage.js"></script>
+<script src="js/ground.js"></script>
+<script src="js/water.js"></script>
+<script src="js/buildings.js"></script>
+<script src="js/bridge.js"></script>
+<script src="js/wires-lamps.js"></script>
+<script src="js/shop.js"></script>
+<script src="js/watermelons.js"></script>
+<script src="js/people.js"></script>
+<script src="js/dock-market.js"></script>
+<script src="js/tram.js"></script>
+<script src="js/trees.js"></script>
+<script src="js/controls.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
